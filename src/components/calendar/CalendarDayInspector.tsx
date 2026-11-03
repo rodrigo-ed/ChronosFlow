@@ -84,18 +84,20 @@ export const CalendarDayInspector: React.FC<CalendarDayInspectorProps> = ({
                       <h5 className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                         {ev.title}
                       </h5>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => onEditEvent(ev)}
-                          className="p-0.5 text-slate-400 hover:text-indigo-600"
+                          className="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded touch-manipulation cursor-pointer"
+                          title="Editar compromisso"
                         >
-                          <Edit2 className="w-3 h-3" />
+                          <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => onDeleteEvent(ev.id)}
-                          className="p-0.5 text-slate-400 hover:text-rose-500"
+                          className="p-1 text-slate-400 hover:text-rose-500 rounded touch-manipulation cursor-pointer"
+                          title="Excluir compromisso"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>

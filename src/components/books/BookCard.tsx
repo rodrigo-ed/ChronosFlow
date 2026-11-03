@@ -31,11 +31,19 @@ export const BookCard: React.FC<BookCardProps> = ({
       <div>
         <div className="flex items-start justify-between gap-2">
           <span className="w-2.5 h-2.5 rounded-full shrink-0 mt-1" style={{ backgroundColor: book.coverColor || '#4F46E5' }} />
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={() => onEditBook(book)} className="p-1 text-slate-400 hover:text-indigo-600">
+          <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => onEditBook(book)}
+              className="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg touch-manipulation cursor-pointer"
+              title="Editar livro"
+            >
               <Edit2 className="w-3.5 h-3.5" />
             </button>
-            <button onClick={() => onDeleteBook(book.id)} className="p-1 text-slate-400 hover:text-rose-500">
+            <button
+              onClick={() => onDeleteBook(book.id)}
+              className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg touch-manipulation cursor-pointer"
+              title="Excluir livro"
+            >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>

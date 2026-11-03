@@ -25,9 +25,13 @@ export default function App() {
   const state = useAppState();
   const [activeTab, setActiveTab] = useState<ViewTab>('tasks');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const s = localStorage.getItem('chronosflow_dark_mode');
-      return s !== null ? s === 'true' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const s = localStorage.getItem('chronosflow_dark_mode');
+        return s !== null ? s === 'true' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+    } catch (e) {
+      console.warn('Dark mode storage read error:', e);
     }
     return false;
   });
@@ -44,21 +48,33 @@ export default function App() {
   const [authModal, setAuthModal] = useState(false);
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('chronosflow_dark_mode', 'true');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('chronosflow_dark_mode', 'false');
+    try {
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('chronosflow_dark_mode', 'true');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('chronosflow_dark_mode', 'false');
+      }
+    } catch (e) {
+      console.warn('Dark mode storage write error:', e);
     }
   }, [isDarkMode]);
 
   // Periodic reminder alerts
   useEffect(() => {
     if (!state.notificationSettings.enabled) return;
-    checkUpcomingAlerts(state.tasks, state.events, state.notificationSettings.leadMinutes, state.notificationSettings.sound);
-    const id = setInterval(() => {
+    try {
       checkUpcomingAlerts(state.tasks, state.events, state.notificationSettings.leadMinutes, state.notificationSettings.sound);
+    } catch (e) {
+      console.warn('Initial alert check error:', e);
+    }
+    const id = setInterval(() => {
+      try {
+        checkUpcomingAlerts(state.tasks, state.events, state.notificationSettings.leadMinutes, state.notificationSettings.sound);
+      } catch (e) {
+        console.warn('Periodic alert check error:', e);
+      }
     }, 60000);
     return () => clearInterval(id);
   }, [state.tasks, state.events, state.notificationSettings]);

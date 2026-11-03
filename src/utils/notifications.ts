@@ -12,7 +12,7 @@ export function playNotificationSound(): void {
     }
 
     if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
+      audioCtx.resume().catch(() => {});
     }
 
     const now = audioCtx.currentTime;
@@ -23,12 +23,12 @@ export function playNotificationSound(): void {
     const gainNode = audioCtx.createGain();
 
     osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(523.25, now); // C5
-    osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.15); // G5
+    osc1.frequency.setValueAtTime(523.25, now);
+    osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.15);
 
     osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(659.25, now); // E5
-    osc2.frequency.exponentialRampToValueAtTime(1046.5, now + 0.18); // C6
+    osc2.frequency.setValueAtTime(659.25, now);
+    osc2.frequency.exponentialRampToValueAtTime(1046.5, now + 0.18);
 
     gainNode.gain.setValueAtTime(0.001, now);
     gainNode.gain.linearRampToValueAtTime(0.2, now + 0.05);
@@ -48,34 +48,47 @@ export function playNotificationSound(): void {
 }
 
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
-  if (!('Notification' in window)) {
+  try {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      return 'denied';
+    }
+    if (Notification.permission === 'granted') {
+      return 'granted';
+    }
+    return await Notification.requestPermission();
+  } catch (err) {
+    console.warn('Could not request notification permission:', err);
     return 'denied';
   }
-  if (Notification.permission === 'granted') {
-    return 'granted';
-  }
-  return await Notification.requestPermission();
 }
 
 export function sendBrowserNotification(title: string, body: string, playSound: boolean = true): void {
   if (playSound) {
-    playNotificationSound();
+    try {
+      playNotificationSound();
+    } catch {}
   }
 
-  if (!('Notification' in window)) {
+  if (typeof window === 'undefined' || !('Notification' in window)) {
     return;
   }
 
-  if (Notification.permission === 'granted') {
-    try {
-      new Notification(title, {
-        body,
-        icon: '/icon.svg',
-        badge: '/icon.svg',
-      });
-    } catch (err) {
-      console.warn('Notification failed:', err);
+  try {
+    if (Notification.permission === 'granted') {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.ready.then((reg) => {
+          reg.showNotification(title, { body, icon: '/icon.svg', badge: '/icon.svg' });
+        }).catch(() => {
+          try {
+            new Notification(title, { body, icon: '/icon.svg', badge: '/icon.svg' });
+          } catch {}
+        });
+      } else {
+        new Notification(title, { body, icon: '/icon.svg', badge: '/icon.svg' });
+      }
     }
+  } catch (err) {
+    console.warn('Notification could not be displayed:', err);
   }
 }
 
@@ -88,45 +101,57 @@ export function checkUpcomingAlerts(
   leadMinutes: number = 15,
   soundEnabled: boolean = true
 ): void {
-  const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  try {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-  // Check today's tasks
-  for (const task of tasks) {
-    if (task.completed || !task.dueTime || task.dueDate !== todayStr) continue;
+    // Check today's tasks
+    for (const task of tasks || []) {
+      if (task.completed || !task.dueTime || task.dueDate !== todayStr) continue;
 
-    const [h, m] = task.dueTime.split(':').map((v) => parseInt(v, 10));
-    const taskMinutes = h * 60 + m;
-    const diff = taskMinutes - currentMinutes;
+      const parts = (task.dueTime || '').split(':');
+      if (parts.length < 2) continue;
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      if (isNaN(h) || isNaN(m)) continue;
+      const taskMinutes = h * 60 + m;
+      const diff = taskMinutes - currentMinutes;
 
-    const reminderKey = `task-${task.id}-${todayStr}-${task.dueTime}`;
-    if (diff > 0 && diff <= leadMinutes && !firedReminders.has(reminderKey)) {
-      firedReminders.add(reminderKey);
-      sendBrowserNotification(
-        `Lembrete de Tarefa: ${task.title}`,
-        `Prazo em ${diff} minutos (${task.dueTime}) · Prioridade: ${task.priority.toUpperCase()}`,
-        soundEnabled
-      );
+      const reminderKey = `task-${task.id}-${todayStr}-${task.dueTime}`;
+      if (diff > 0 && diff <= leadMinutes && !firedReminders.has(reminderKey)) {
+        firedReminders.add(reminderKey);
+        sendBrowserNotification(
+          `Lembrete de Tarefa: ${task.title}`,
+          `Prazo em ${diff} minutos (${task.dueTime}) · Prioridade: ${task.priority.toUpperCase()}`,
+          soundEnabled
+        );
+      }
     }
-  }
 
-  // Check today's events
-  for (const event of events) {
-    if (event.isAllDay || !event.startTime || event.startDate !== todayStr) continue;
+    // Check today's events
+    for (const event of events || []) {
+      if (event.isAllDay || !event.startTime || event.startDate !== todayStr) continue;
 
-    const [h, m] = event.startTime.split(':').map((v) => parseInt(v, 10));
-    const eventMinutes = h * 60 + m;
-    const diff = eventMinutes - currentMinutes;
+      const parts = (event.startTime || '').split(':');
+      if (parts.length < 2) continue;
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      if (isNaN(h) || isNaN(m)) continue;
+      const eventMinutes = h * 60 + m;
+      const diff = eventMinutes - currentMinutes;
 
-    const reminderKey = `event-${event.id}-${todayStr}-${event.startTime}`;
-    if (diff > 0 && diff <= leadMinutes && !firedReminders.has(reminderKey)) {
-      firedReminders.add(reminderKey);
-      sendBrowserNotification(
-        `Compromisso no Calendário: ${event.title}`,
-        `Inicia em ${diff} minutos (${event.startTime}) ${event.location ? '· Local: ' + event.location : ''}`,
-        soundEnabled
-      );
+      const reminderKey = `event-${event.id}-${todayStr}-${event.startTime}`;
+      if (diff > 0 && diff <= leadMinutes && !firedReminders.has(reminderKey)) {
+        firedReminders.add(reminderKey);
+        sendBrowserNotification(
+          `Compromisso: ${event.title}`,
+          `Inicia em ${diff} minutos (${event.startTime}) ${event.location ? '· Local: ' + event.location : ''}`,
+          soundEnabled
+        );
+      }
     }
+  } catch (err) {
+    console.warn('Error checking alerts:', err);
   }
 }

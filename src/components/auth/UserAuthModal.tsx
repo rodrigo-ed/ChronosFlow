@@ -47,6 +47,16 @@ export const UserAuthModal: React.FC<UserAuthModalProps> = ({
     }
   };
 
+  const [copied, setCopied] = useState(false);
+  const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isUnauthorizedDomain = error?.includes('unauthorized-domain') || error?.includes('auth/unauthorized-domain');
+
+  const copyHost = () => {
+    navigator.clipboard.writeText(currentHost);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
       <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl">
@@ -109,11 +119,40 @@ export const UserAuthModal: React.FC<UserAuthModalProps> = ({
                 metas e treinos com segurança na nuvem e sincronizar em múltiplos dispositivos.
               </p>
 
-              {error && (
+              {isUnauthorizedDomain ? (
+                <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 space-y-2">
+                  <div className="font-bold flex items-center gap-1.5 text-amber-700 dark:text-amber-300">
+                    <span>Domínio Vercel não autorizado</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed">
+                    O Firebase bloqueia o login até que você autorize seu domínio da Vercel.
+                  </p>
+                  <div className="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-1 rounded border border-amber-200 dark:border-amber-800 font-mono text-[10px] justify-between">
+                    <span className="truncate">{currentHost}</span>
+                    <button
+                      onClick={copyHost}
+                      className="text-indigo-600 font-sans font-medium hover:underline shrink-0"
+                    >
+                      {copied ? 'Copiado!' : 'Copiar'}
+                    </button>
+                  </div>
+                  <a
+                    href="https://console.firebase.google.com/project/gen-lang-client-0039077975/authentication/settings"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block w-full py-1 text-center font-medium bg-amber-600 hover:bg-amber-700 text-white rounded text-[11px] transition"
+                  >
+                    Abrir Configurações do Firebase
+                  </a>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                    Em <strong>Domínios autorizados</strong>, adicione <code className="font-mono text-indigo-600 dark:text-indigo-400">vercel.app</code> e salve.
+                  </p>
+                </div>
+              ) : error ? (
                 <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 text-xs text-rose-600 text-center">
                   {error}
                 </div>
-              )}
+              ) : null}
 
               <button
                 onClick={handleLogin}

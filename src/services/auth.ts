@@ -30,7 +30,9 @@ export async function signInWithGoogle(): Promise<User> {
     return user;
   } catch (error: any) {
     console.error('Google Sign-in Error:', error);
-    throw new Error(error?.message || 'Falha na autenticação com a conta Google');
+    const customError = new Error(error?.message || 'Falha na autenticação com a conta Google');
+    (customError as any).code = error?.code || '';
+    throw customError;
   }
 }
 
@@ -44,5 +46,7 @@ export async function logoutUser(): Promise<void> {
 }
 
 export function onUserAuthStateChanged(callback: (user: User | null) => void) {
-  return onAuthStateChanged(auth, callback);
+  return onAuthStateChanged(auth, callback, (error) => {
+    console.warn('Auth observer error:', error);
+  });
 }

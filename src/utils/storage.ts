@@ -25,9 +25,34 @@ const KEYS = {
   NOTIFICATIONS: 'chronosflow_notifications_v2',
 };
 
+const memoryStore: Record<string, string> = {};
+
+function safeGet(key: string): string | null {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage.getItem(key);
+    }
+  } catch (err) {
+    console.warn(`localStorage getItem error for ${key}:`, err);
+  }
+  return memoryStore[key] || null;
+}
+
+function safeSet(key: string, value: string): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(key, value);
+      return;
+    }
+  } catch (err) {
+    console.warn(`localStorage setItem error for ${key}:`, err);
+  }
+  memoryStore[key] = value;
+}
+
 function getItem<T>(key: string, fallback: T): T {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = safeGet(key);
     return raw ? JSON.parse(raw) : fallback;
   } catch (err) {
     console.warn(`Error reading ${key}:`, err);
@@ -37,7 +62,7 @@ function getItem<T>(key: string, fallback: T): T {
 
 function setItem<T>(key: string, value: T): void {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    safeSet(key, JSON.stringify(value));
   } catch (err) {
     console.warn(`Error writing ${key}:`, err);
   }
@@ -45,7 +70,7 @@ function setItem<T>(key: string, value: T): void {
 
 export function loadTasks(): Task[] {
   const tasks = getItem<Task[]>(KEYS.TASKS, INITIAL_TASKS);
-  if (!localStorage.getItem(KEYS.TASKS)) saveTasks(INITIAL_TASKS);
+  if (!safeGet(KEYS.TASKS)) saveTasks(INITIAL_TASKS);
   return tasks;
 }
 export function saveTasks(tasks: Task[]): void {
@@ -54,7 +79,7 @@ export function saveTasks(tasks: Task[]): void {
 
 export function loadGoals(): Goal[] {
   const goals = getItem<Goal[]>(KEYS.GOALS, INITIAL_GOALS);
-  if (!localStorage.getItem(KEYS.GOALS)) saveGoals(INITIAL_GOALS);
+  if (!safeGet(KEYS.GOALS)) saveGoals(INITIAL_GOALS);
   return goals;
 }
 export function saveGoals(goals: Goal[]): void {
@@ -63,7 +88,7 @@ export function saveGoals(goals: Goal[]): void {
 
 export function loadEvents(): CalendarEvent[] {
   const events = getItem<CalendarEvent[]>(KEYS.EVENTS, INITIAL_EVENTS);
-  if (!localStorage.getItem(KEYS.EVENTS)) saveEvents(INITIAL_EVENTS);
+  if (!safeGet(KEYS.EVENTS)) saveEvents(INITIAL_EVENTS);
   return events;
 }
 export function saveEvents(events: CalendarEvent[]): void {
@@ -72,7 +97,7 @@ export function saveEvents(events: CalendarEvent[]): void {
 
 export function loadBooks(): Book[] {
   const books = getItem<Book[]>(KEYS.BOOKS, INITIAL_BOOKS);
-  if (!localStorage.getItem(KEYS.BOOKS)) saveBooks(INITIAL_BOOKS);
+  if (!safeGet(KEYS.BOOKS)) saveBooks(INITIAL_BOOKS);
   return books;
 }
 export function saveBooks(books: Book[]): void {
@@ -81,7 +106,7 @@ export function saveBooks(books: Book[]): void {
 
 export function loadWorkouts(): Workout[] {
   const workouts = getItem<Workout[]>(KEYS.WORKOUTS, INITIAL_WORKOUTS);
-  if (!localStorage.getItem(KEYS.WORKOUTS)) saveWorkouts(INITIAL_WORKOUTS);
+  if (!safeGet(KEYS.WORKOUTS)) saveWorkouts(INITIAL_WORKOUTS);
   return workouts;
 }
 export function saveWorkouts(workouts: Workout[]): void {

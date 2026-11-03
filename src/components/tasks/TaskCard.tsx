@@ -81,11 +81,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               {task.title}
             </h4>
 
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={() => onEditTask(task)} className="p-1 text-slate-400 hover:text-indigo-600 rounded">
+            <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => onEditTask(task)}
+                className="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg touch-manipulation cursor-pointer"
+                title="Editar tarefa"
+              >
                 <Edit2 className="w-3.5 h-3.5" />
               </button>
-              <button onClick={() => onDeleteTask(task.id)} className="p-1 text-slate-400 hover:text-rose-500 rounded">
+              <button
+                onClick={() => onDeleteTask(task.id)}
+                className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg touch-manipulation cursor-pointer"
+                title="Excluir tarefa"
+              >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>

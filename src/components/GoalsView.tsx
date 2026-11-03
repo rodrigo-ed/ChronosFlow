@@ -85,17 +85,17 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                       {goal.category}
                     </span>
 
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => onEditGoal(goal)}
-                        className="p-1 text-slate-400 hover:text-indigo-600 rounded"
+                        className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg touch-manipulation cursor-pointer"
                         title="Editar meta"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => onDeleteGoal(goal.id)}
-                        className="p-1 text-slate-400 hover:text-rose-500 rounded"
+                        className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg touch-manipulation cursor-pointer"
                         title="Excluir meta"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
