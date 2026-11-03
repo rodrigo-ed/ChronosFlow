@@ -26,7 +26,7 @@ import {
   loadNotificationSettings,
   saveNotificationSettings,
 } from '../utils/storage';
-import { onUserAuthStateChanged } from '../services/auth';
+import { onUserAuthStateChanged, checkRedirectResult } from '../services/auth';
 import { saveUserItems, loadUserItems } from '../services/firestoreSync';
 
 export function useAppState() {
@@ -43,7 +43,7 @@ export function useAppState() {
     leadMinutes: 15,
   });
 
-  // Initial local load
+  // Initial local load & check redirect auth
   useEffect(() => {
     setTasks(loadTasks());
     setGoals(loadGoals());
@@ -52,6 +52,10 @@ export function useAppState() {
     setWorkouts(loadWorkouts());
     setCustomHolidays(loadCustomHolidays());
     setNotificationSettings(loadNotificationSettings());
+
+    checkRedirectResult().catch((e) => {
+      console.warn('Redirect auth check error:', e);
+    });
   }, []);
 
   // Listen to Google Auth changes
